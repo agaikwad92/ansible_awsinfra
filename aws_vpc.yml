@@ -1,0 +1,8 @@
+---
+
+- name: create aws infra
+  hosts: localhost
+  #user: ansnode
+  #become: true
+  roles:
+          - aws_infra

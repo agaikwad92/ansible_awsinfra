@@ -1,0 +1,116 @@
+---
+# tasks file for aws_infra
+#
+- name: create vpc
+  ec2_vpc_net:
+          name: "{{ vpc_name }}"
+          #state: "{{ state }}"
+          cidr_block: "{{ vpc_cidr}}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          region: "{{ region }}"
+  register: vpc
+
+- name: create subnet pubA
+  ec2_vpc_subnet:
+          #state: present
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          cidr: "{{ subA_cidr }}"
+          region: "{{ region }}"
+          az: "us-east-1a"
+          map_public: yes
+          tags:
+                  Name: "{{ pub_sub}}_A"
+  register: pubsubA
+
+
+- name: Create subnet PubB
+  ec2_vpc_subnet:
+          #state: present
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          cidr: "{{ subB_cidr }}"
+          region: "{{ region }}"
+          az: "us-east-1b"
+          map_public: yes
+          tags:
+                  Name: "{{ pub_sub}}_B"
+  register: pubsubB
+
+- name: Create subnet PriA
+  ec2_vpc_subnet:
+          #state: present
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          cidr: "{{ subA_cidr_pri }}"
+          region: "{{ region }}"
+          az: "us-east-1a"
+          
+          tags:
+                  Name: "{{ pri_sub}}_A"
+  register: prisubA
+
+- name: Create subnet PriB
+  ec2_vpc_subnet:
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          cidr: "{{ subB_cidr_pri }}"
+          region: "{{ region }}"
+          az: "us-east-1b"
+
+          tags:
+                  Name: "{{ pri_sub}}_B"
+  register: prisubB
+
+- name: create internet gateway
+  ec2_vpc_igw:
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          region: "{{ region }}"
+          tags:
+                  Name: "{{ igw }}"
+  register: igw
+
+- name: create route table
+  ec2_vpc_route_table:
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          vpc_id: "{{ vpc.vpc.id }}"
+          region: "{{ region }}"
+          subnets:
+                  - "{{ pubsubA.subnet.id }}"
+                  - "{{ pubsubB.subnet.id }}"
+          routes:
+                  - dest: 0.0.0.0/0
+                    gateway_id: "{{ igw.gateway_id }}"
+          tags:
+                  Name: "PublicRTB"
+  register: pubrtb
+
+- name: Launch EC2 instance
+  ec2:
+          key_name: Test_all
+          state: "{{ state }}"
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          region: "{{ region }}"
+          instance_type: t2.micro
+          image: ami-07ebfd5b3428b6f4d
+          vpc_subnet_id: "{{ pubsubA.subnet.id }}"
+          assign_public_ip: yes
+          instance_tags:
+                  Name: "Ansible_EC2"
+                  # register: ansible-ec2
+

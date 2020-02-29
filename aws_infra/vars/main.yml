@@ -1,0 +1,17 @@
+---
+# vars file for aws_infra
+
+aws_access_key: ""
+aws_secret_key: ""
+region: "us-east-1"
+state: "absent"
+vpc_name: "ansible_vpc"
+vpc_cidr: "10.0.0.0/16"
+igw: "ansible_igw"
+pub_sub: "sub_pub"
+pri_sub: "sub_pri"
+subA_cidr: "10.0.1.0/24"
+subB_cidr: "10.0.2.0/24"
+subA_cidr_pri: "10.0.0.0/24"
+subB_cidr_pri: "10.0.3.0/24"
+#pub_sub_B: "SubnetB_Pub"
